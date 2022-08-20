@@ -14,6 +14,7 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import reactor.core.publisher.Mono;
 
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -37,6 +38,12 @@ public class AlarmService extends TelegramLongPollingBot {
     @Value("${myChatId}")
     private String myChatId;
 
+    @Value("${tokenUrl}")
+    private String tokenUrl;
+
+    @Value("${exchangeRateUrl}")
+    private String exchangeRateUrl;
+
     public void alarm() {
 
         List<AlarmInfo> alarmInfoList = coinBotMapper.selectAllAlarmInfo();
@@ -47,12 +54,12 @@ public class AlarmService extends TelegramLongPollingBot {
         param = StringUtils.hasText(param) ? param.substring(0, param.length() - 1) : param;
         log.info("[alarm] param = {}", param);
 
-        Mono<HashMap> test = getRequestApi.getByMap(param);
+        Mono<HashMap> test = getRequestApi.getByMap(tokenUrl, param);
         for (AlarmInfo x : alarmInfoList) {
             x.setPrice(String.format("%.4f", test.block().get(x.getContract())));
         }
 
-        Mono<List> test1 = getRequestApi.getByList(null);
+        Mono<List> test1 = getRequestApi.getByList(exchangeRateUrl, null);
         Map<String, String> map = new HashMap<>();
         map = (Map<String, String>) test1.block().get(0);
         String exchangeRate = String.valueOf(map.get("basePrice"));

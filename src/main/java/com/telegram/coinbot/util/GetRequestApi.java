@@ -17,28 +17,22 @@ import java.util.List;
 @Component
 public class GetRequestApi {
 
-    @Value("${tokenUrl}")
-    private String tokenUrl;
-
-    @Value("${exchangeRateUrl}")
-    private String exchangeRateUrl;
-
     WebClient webClient2 = WebClient.builder()
             .defaultHeader(HttpHeaders.CONTENT_TYPE, MediaType.APPLICATION_JSON_VALUE)
             .build();
 
-    public Mono<HashMap> getByMap(String param) {
+    public Mono<HashMap> getByMap(String url,String param) {
         param = StringUtils.hasText(param) ? param : "";
         return webClient2.get()
-                .uri(tokenUrl + param)
+                .uri(url + param)
                 .retrieve()
                 .bodyToMono(HashMap.class);
     }
 
-    public Mono<List> getByList(String param) {
+    public Mono<List> getByList(String url,String param) {
         param = StringUtils.hasText(param) ? param : "";
         return webClient2.get()
-                .uri(exchangeRateUrl + param)
+                .uri(url + param)
                 .retrieve()
                 .bodyToMono(List.class);
     }
