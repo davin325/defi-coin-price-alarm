@@ -14,10 +14,12 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import reactor.core.publisher.Mono;
 
-import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+
+import static com.telegram.coinbot.util.Calculator.roundDouble;
+import static com.telegram.coinbot.util.Calculator.roundString;
 
 
 @Slf4j
@@ -56,7 +58,7 @@ public class AlarmService extends TelegramLongPollingBot {
 
         Mono<HashMap> test = getRequestApi.getByMap(tokenUrl, param);
         for (AlarmInfo x : alarmInfoList) {
-            x.setPrice(String.format("%.4f", test.block().get(x.getContract())));
+            x.setPrice(roundString(String.valueOf(test.block().get(x.getContract())), 1000));
         }
 
         Mono<List> test1 = getRequestApi.getByList(exchangeRateUrl, null);
@@ -64,18 +66,25 @@ public class AlarmService extends TelegramLongPollingBot {
         map = (Map<String, String>) test1.block().get(0);
         String exchangeRate = String.valueOf(map.get("basePrice"));
         log.info("[alarm - exchangeRate] = {}", map.get("basePrice"));
-        //telegram.alarm(alarmInfoList, exchangeRate);
 
         SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
         StringBuilder sb = new StringBuilder();
-        sb.append("환율: " + exchangeRate + "원\n");
+        sb.append("```\n");
+        sb.append("환율: " + exchangeRate + "₩\n\n");
         for (AlarmInfo x : alarmInfoList) {
-            sb.append(x.getName() + "[" + x.getSymbol() + "]" + ": " + x.getPrice() + "$|");
-            sb.append(Double.parseDouble(x.getPrice()) * Double.parseDouble(exchangeRate) + "\n");
+            sb.append(x.getSymbol());
+            sb.append(String.format("%" + (10 - x.getSymbol().length()) + "s", ":"));
+            sb.append(String.format("%10s", x.getPrice() + "$ |"));
+            sb.append(String.format("%10s", roundDouble(x.getPrice() * Double.parseDouble(exchangeRate), 100) + "₩\n"));
         }
 
+        //@TODO nft 가격 추가
+
+
+        sb.append("```");
         message.setText(sb.toString());
         message.setChatId(getMyChatId());
+        message.setParseMode("MarkDown");
         try {
             execute(message);
         } catch (TelegramApiException e) {
@@ -86,19 +95,21 @@ public class AlarmService extends TelegramLongPollingBot {
     @Override
     public void onUpdateReceived(Update update) {
         // We check if the update has a message and the message has text
-        if (update.hasMessage() && update.getMessage().hasText()) {
-            SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
-            message.setChatId(update.getMessage().getChatId().toString());
-            if (update.getMessage().getText().charAt(0) == '/') {
+        if (update.hasMessage() && update.getMessage().hasText() && getMyChatId().equals(update.getMessage().getChatId().toString())) {
+//            SendMessage message = new SendMessage(); // Create a SendMessage object with mandatory fields
+
+            if ("/price".equals(update.getMessage().getText())) {
                 alarm();
-            } else {
-                message.setText(update.getMessage().getText());
-                try {
-                    execute(message); // Call method to send the message
-                } catch (TelegramApiException e) {
-                    e.printStackTrace();
-                }
             }
+//            } else {
+//                message.setChatId(update.getMessage().getChatId().toString());
+//                message.setText(update.getMessage().getText());
+//                try {
+//                    execute(message); // Call method to send the message
+//                } catch (TelegramApiException e) {
+//                    e.printStackTrace();
+//                }
+//            }
         }
     }
 
