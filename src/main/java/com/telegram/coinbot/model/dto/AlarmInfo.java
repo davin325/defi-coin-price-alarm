@@ -10,6 +10,7 @@ public class AlarmInfo {
     private String symbol;
     private String contract;
     private String type;
+    private String myPrice;
     private Double price;
 
 }

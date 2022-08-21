@@ -14,6 +14,8 @@ import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import reactor.core.publisher.Mono;
 
+import java.text.DecimalFormat;
+import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -43,21 +45,37 @@ public class AlarmService extends TelegramLongPollingBot {
     @Value("${tokenUrl}")
     private String tokenUrl;
 
+    @Value("${nftUrl}")
+    private String nftUrl;
+
     @Value("${exchangeRateUrl}")
     private String exchangeRateUrl;
 
     public void alarm() {
 
         List<AlarmInfo> alarmInfoList = coinBotMapper.selectAllAlarmInfo();
-        String param = "";
+        List<AlarmInfo> tokenList = new ArrayList<>();
+        List<AlarmInfo> nftList = new ArrayList<>();
         for (AlarmInfo x : alarmInfoList) {
+            if ("TOKEN".equals(x.getType())) {
+                tokenList.add(x);
+            }
+            if ("PALA".equals(x.getType())) {
+                nftList.add(x);
+            }
+        }
+
+
+        String param = "";
+        for (AlarmInfo x : tokenList) {
             param += x.getContract() + ",";
         }
         param = StringUtils.hasText(param) ? param.substring(0, param.length() - 1) : param;
         log.info("[alarm] param = {}", param);
 
         Mono<HashMap> test = getRequestApi.getByMap(tokenUrl, param);
-        for (AlarmInfo x : alarmInfoList) {
+        //Mono<HashMap> test = null;
+        for (AlarmInfo x : tokenList) {
             x.setPrice(roundString(String.valueOf(test.block().get(x.getContract())), 1000));
         }
 
@@ -71,7 +89,8 @@ public class AlarmService extends TelegramLongPollingBot {
         StringBuilder sb = new StringBuilder();
         sb.append("```\n");
         sb.append("환율: " + exchangeRate + "₩\n\n");
-        for (AlarmInfo x : alarmInfoList) {
+        sb.append("TOKEN\n");
+        for (AlarmInfo x : tokenList) {
             sb.append(x.getSymbol());
             sb.append(String.format("%" + (10 - x.getSymbol().length()) + "s", ":"));
             sb.append(String.format("%10s", x.getPrice() + "$ |"));
@@ -79,6 +98,22 @@ public class AlarmService extends TelegramLongPollingBot {
         }
 
         //@TODO nft 가격 추가
+        sb.append("\n");
+        sb.append("NFT\n");
+        for (AlarmInfo x : nftList) {
+            Mono<HashMap> test2 = getRequestApi.getByMap(nftUrl, x.getContract());
+
+            String temp = String.valueOf(test2.block().get("floorPriceInKlay"));
+            x.setPrice(Double.valueOf(temp.substring(0, temp.length() - 18)));
+
+            sb.append(x.getSymbol());
+            sb.append(String.format("%" + (10 - x.getSymbol().length()) + "s", ":"));
+            sb.append(String.format("%11s", x.getMyPrice() + "klay =>"));
+
+            DecimalFormat df=new DecimalFormat("#.##");
+            sb.append(String.format("%9s", df.format(roundDouble(x.getPrice(), 10)) + "klay\n"));
+            //sb.append(String.format("%10s", x.getPrice() + "\n"));
+        }
 
 
         sb.append("```");

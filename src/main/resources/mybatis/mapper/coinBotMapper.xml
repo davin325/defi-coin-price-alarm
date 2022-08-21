@@ -7,6 +7,7 @@
              , contract
              , symbol
              , type
+             , my_price
         FROM tokens
         ORDER BY LENGTH(symbol) DESC;
     </select>
