@@ -7,6 +7,7 @@
              , contract
              , symbol
              , type
-        FROM tokens;
+        FROM tokens
+        ORDER BY LENGTH(symbol) DESC;
     </select>
 </mapper>
