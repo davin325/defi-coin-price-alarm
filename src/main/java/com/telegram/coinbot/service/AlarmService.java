@@ -1,8 +1,16 @@
 package com.telegram.coinbot.service;
 
+import static com.telegram.coinbot.util.Calculator.roundDouble;
+import static com.telegram.coinbot.util.Calculator.roundString;
+
 import com.telegram.coinbot.model.dto.AlarmInfo;
 import com.telegram.coinbot.model.mapper.CoinBotMapper;
 import com.telegram.coinbot.util.GetRequestApi;
+import java.text.DecimalFormat;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -13,15 +21,6 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 import reactor.core.publisher.Mono;
-
-import java.text.DecimalFormat;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-
-import static com.telegram.coinbot.util.Calculator.roundDouble;
-import static com.telegram.coinbot.util.Calculator.roundString;
 
 
 @Slf4j
